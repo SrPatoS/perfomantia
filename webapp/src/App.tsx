@@ -1,0 +1,99 @@
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider, useAuth } from './AuthContext';
+import { Activity, LayoutDashboard, Search, Bell, Settings, LogOut, Globe } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import './i18n';
+
+import Login from './Login';
+import Dashboard from './Dashboard';
+
+const queryClient = new QueryClient({
+  defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } }
+});
+
+function AppLayout() {
+  const { token, user, logout } = useAuth();
+  const location = useLocation();
+  const { t, i18n } = useTranslation();
+
+  const toggleLanguage = () => i18n.changeLanguage(i18n.language === 'en' ? 'pt' : 'en');
+
+  if (!token) return <Navigate to="/login" replace />;
+
+  return (
+    <div className="app-layout">
+      {/* SIDEBAR PANEL */}
+      <aside className="sidebar">
+        <div className="brand-header">
+          <div className="logo-circle"><Activity size={18} /></div>
+          <div>Perfomantia</div>
+        </div>
+        
+        <nav className="nav-links" style={{ flex: 1 }}>
+          <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <LayoutDashboard size={18} /> {t('dashboard')}
+          </NavLink>
+        </nav>
+
+        {/* Bottom Profile Area */}
+        <div style={{ marginTop: 'auto', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '1.5rem' }}>
+           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ width: 36, height: 36, background: 'var(--accent-gradient)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff' }}>
+                {user?.username?.[0]?.toUpperCase()}
+              </div>
+              <div>
+                 <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 500 }}>{user?.username}</div>
+                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('administrator')}</div>
+              </div>
+           </div>
+           <button onClick={logout} className="nav-link" style={{ background: 'transparent', border: 'none', width: '100%', padding: '0.5rem', cursor: 'pointer', textAlign: 'left' }}>
+             <LogOut size={16} /> {t('logout')}
+           </button>
+        </div>
+      </aside>
+      
+      {/* MAIN CONTENT AREA */}
+      <main className="main-content">
+        <header className="top-nav">
+          <h1 className="page-title">{location.pathname === '/' ? t('my_dashboard') : 'Settings'}</h1>
+          
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+             <div className="user-profile">
+               <Search size={16} color="var(--text-muted)" />
+               <input placeholder={t('search_metrics')} style={{ background: 'transparent', border: 'none', padding: 0 }} />
+             </div>
+             
+             <button onClick={toggleLanguage} style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff' }}>
+                <Globe size={18} color="var(--text-muted)" /> <span style={{fontSize:'0.85rem', fontWeight: 600}}>{t('language')}</span>
+             </button>
+
+             <Bell size={20} color="var(--text-muted)" style={{ cursor: 'pointer' }}/>
+             <Settings size={20} color="var(--text-muted)" style={{ cursor: 'pointer' }} />
+          </div>
+        </header>
+
+        <section className="content-area">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+          </Routes>
+        </section>
+      </main>
+    </div>
+  );
+}
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/*" element={<AppLayout />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}

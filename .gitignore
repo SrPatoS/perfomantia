@@ -1,0 +1,41 @@
+# Dependencies
+node_modules/
+.npm
+.yarn
+.bun
+
+# Builds and Executables
+dist/
+dist-ssr/
+build/
+.next/
+out/
+perfomantia-server
+perfomantia-server.exe
+webapp/dist/
+
+# SQLite databases (User config & Secrets)
+*.sqlite
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
+perfomantia.sqlite
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# OS Files
+.DS_Store
+Thumbs.db
