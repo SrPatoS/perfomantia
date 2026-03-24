@@ -1,13 +1,14 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './AuthContext';
-import { Activity, LayoutDashboard, Search, Settings, LogOut, Globe } from 'lucide-react';
+import { Activity, LayoutDashboard, Settings, LogOut, Globe, ServerCog } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import './i18n';
 
 import Login from './Login';
 import Dashboard from './Dashboard';
 import SettingsPage from './Settings';
+import ProcessesPage from './Processes';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } }
@@ -35,6 +36,9 @@ function AppLayout() {
           <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <LayoutDashboard size={18} /> {t('dashboard')}
           </NavLink>
+          <NavLink to="/processes" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <ServerCog size={18} /> {t('process_menu')}
+          </NavLink>
         </nav>
 
         {/* Bottom Profile Area */}
@@ -60,15 +64,12 @@ function AppLayout() {
       {/* MAIN CONTENT AREA */}
       <main className="main-content">
         <header className="top-nav">
-          <h1 className="page-title">{location.pathname === '/' ? t('my_dashboard') : location.pathname === '/settings' ? t('settings') : ''}</h1>
+          <h1 className="page-title">
+             {location.pathname === '/' ? t('my_dashboard') : location.pathname === '/settings' ? t('settings') : location.pathname === '/processes' ? t('process_menu') : ''}
+          </h1>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-             <div className="user-profile">
-               <Search size={16} color="var(--text-muted)" />
-               <input placeholder={t('search_metrics')} style={{ background: 'transparent', border: 'none', padding: 0 }} />
-             </div>
-             
-             <button onClick={toggleLanguage} style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff' }}>
+             <button onClick={toggleLanguage} style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff', cursor: 'pointer' }}>
                 <Globe size={18} color="var(--text-muted)" /> <span style={{fontSize:'0.85rem', fontWeight: 600}}>{t('language')}</span>
              </button>
           </div>
@@ -77,6 +78,7 @@ function AppLayout() {
         <section className="content-area">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/processes" element={<ProcessesPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </section>

@@ -187,7 +187,7 @@ export default function Dashboard() {
                       </tr>
                    </thead>
                    <tbody>
-                      {latest?.processes?.map((proc: any, idx: number) => (
+                      {latest?.processes?.slice(0, 6).map((proc: any, idx: number) => (
                          <tr key={idx} style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                             <td style={{ padding: '0.5rem 0', color: '#fff' }}>{proc.name}</td>
                             <td style={{ padding: '0.5rem 0', color: 'var(--accent-color)' }}>{proc.cpu.toFixed(1)}%</td>
