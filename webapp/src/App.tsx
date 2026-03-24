@@ -1,12 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './AuthContext';
-import { Activity, LayoutDashboard, Search, Bell, Settings, LogOut, Globe } from 'lucide-react';
+import { Activity, LayoutDashboard, Search, Settings, LogOut, Globe } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import './i18n';
 
 import Login from './Login';
 import Dashboard from './Dashboard';
+import SettingsPage from './Settings';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } }
@@ -47,6 +48,9 @@ function AppLayout() {
                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('administrator')}</div>
               </div>
            </div>
+           <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} style={{ marginBottom: '0.5rem', display: 'flex' }}>
+             <Settings size={18} /> {t('settings')}
+           </NavLink>
            <button onClick={logout} className="nav-link" style={{ background: 'transparent', border: 'none', width: '100%', padding: '0.5rem', cursor: 'pointer', textAlign: 'left' }}>
              <LogOut size={16} /> {t('logout')}
            </button>
@@ -56,7 +60,7 @@ function AppLayout() {
       {/* MAIN CONTENT AREA */}
       <main className="main-content">
         <header className="top-nav">
-          <h1 className="page-title">{location.pathname === '/' ? t('my_dashboard') : 'Settings'}</h1>
+          <h1 className="page-title">{location.pathname === '/' ? t('my_dashboard') : location.pathname === '/settings' ? t('settings') : ''}</h1>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
              <div className="user-profile">
@@ -67,15 +71,13 @@ function AppLayout() {
              <button onClick={toggleLanguage} style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff' }}>
                 <Globe size={18} color="var(--text-muted)" /> <span style={{fontSize:'0.85rem', fontWeight: 600}}>{t('language')}</span>
              </button>
-
-             <Bell size={20} color="var(--text-muted)" style={{ cursor: 'pointer' }}/>
-             <Settings size={20} color="var(--text-muted)" style={{ cursor: 'pointer' }} />
           </div>
         </header>
 
         <section className="content-area">
           <Routes>
             <Route path="/" element={<Dashboard />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </section>
       </main>

@@ -13,6 +13,7 @@ interface MetricsData {
   cpu: { current: number };
   memory: { percent: number; used: number; total: number };
   disk: { used: number; total: number; percent: number };
+  hardware?: { cpuName: string; cores: number; totalMemGB: string; disks: any[] };
   network: { rx: number; tx: number };
   processes?: any[];
   timestamp?: string;
@@ -141,14 +142,38 @@ export default function Dashboard() {
          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
              <div className="graph-card">
                 <h3 style={{ fontSize: '1rem', fontWeight: 500, color: '#fff', marginBottom: '1rem' }}>{t('host_os_details')}</h3>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                   <span>{t('processor')}:</span>
+                   <span style={{ color: '#fff', textAlign: 'right' }}>{latest?.hardware?.cpuName || '-'}</span>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                   <span>{t('cores')}:</span>
+                   <span style={{ color: '#fff' }}>{latest?.hardware?.cores || 0}</span>
+                </div>
+                
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                   <span>{t('total_ram')}:</span>
+                   <span style={{ color: '#fff' }}>{latest?.hardware?.totalMemGB || 0} GB</span>
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
                    <span>{t('tracking_uptime')}:</span>
                    <span style={{ color: '#fff' }}>{latest ? Math.floor((latest.uptime || 0)/60) : 0} {t('minutes')}</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                   <span>{t('node_alias')}:</span>
-                   <span style={{ color: '#fff' }}>{activeData?.vpsId}</span>
-                </div>
+
+                {latest?.hardware?.disks && latest.hardware.disks.length > 0 && (
+                   <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '0.5rem' }}>
+                      <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem', display: 'block', marginBottom: '0.5rem' }}>{t('disks')}</span>
+                      {latest.hardware.disks.map((d: any, i: number) => (
+                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.4rem', fontSize: '0.85rem' }}>
+                            <span style={{ color: 'var(--accent-color)' }}>{d.mount}</span>
+                            <span style={{ color: '#fff' }}>{d.use}% <span style={{ color: 'var(--text-muted)' }}>({d.sizeGB} GB)</span></span>
+                         </div>
+                      ))}
+                   </div>
+                )}
              </div>
              
              <div className="graph-card">
