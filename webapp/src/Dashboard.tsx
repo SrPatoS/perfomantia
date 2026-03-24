@@ -32,6 +32,7 @@ export default function Dashboard() {
 
   const [servers, setServers] = useState<{ [id: string]: ServerState }>({});
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
+  const [chartType, setChartType] = useState<'cpu' | 'memory' | 'disk'>('cpu');
 
   useEffect(() => {
     if (initialServers && Array.isArray(initialServers)) {
@@ -128,14 +129,34 @@ export default function Dashboard() {
 
          {/* GRAPH AREA */}
          <div className="graph-card">
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem', alignItems: 'center' }}>
               <div>
                  <h2 style={{ fontSize: '1.2rem', fontWeight: 500, color: '#fff' }}>{t('host_perf_history')}</h2>
                  <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{t('real_time_telemetry')}</p>
               </div>
-              <button style={{ padding: '0.4rem 1rem', fontSize: '0.85rem' }}>{t('filters')}</button>
+              <div style={{ display: 'flex', gap: '0.4rem', background: 'rgba(0,0,0,0.3)', padding: '0.2rem', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.05)' }}>
+                 {['cpu', 'memory', 'disk'].map((type: any) => (
+                    <button 
+                      key={type}
+                      onClick={() => setChartType(type)}
+                      style={{ 
+                         padding: '0.4rem 0.8rem', 
+                         fontSize: '0.8rem', 
+                         borderRadius: '6px', 
+                         border: 'none', 
+                         background: chartType === type ? 'var(--accent-color)' : 'transparent',
+                         color: '#fff',
+                         fontWeight: 500,
+                         cursor: 'pointer',
+                         transition: 'background 0.2s'
+                      }}
+                    >
+                      {type === 'cpu' ? 'CPU' : type === 'memory' ? 'RAM' : 'Disco'}
+                    </button>
+                 ))}
+              </div>
             </div>
-            {activeData ? <ServerChart history={activeData.history} /> : <div style={{height: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)'}}>{t('connecting')}</div>}
+            {activeData ? <ServerChart history={activeData.history} type={chartType} /> : <div style={{height: 250, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)'}}>{t('connecting')}</div>}
          </div>
          
          {/* LOWER METRICS (LIKE EXPENSES) */}
@@ -203,12 +224,56 @@ export default function Dashboard() {
   );
 }
 
-function ServerChart({ history }: { history: MetricsData[] }) {
+function ServerChart({ history, type = 'cpu' }: { history: MetricsData[], type?: 'cpu' | 'memory' | 'disk' }) {
   if (history.length === 0) return <div style={{ height: 300 }} />;
+  
+  const labelMap = { cpu: 'CPU Usage (%)', memory: 'RAM Usage (GB)', disk: 'Disk Space (GB)' };
+  const colorMap = { cpu: '#0ea5e9', memory: '#10b981', disk: '#eab308' };
+  const fillMap = { cpu: 'rgba(14, 165, 233, 0.05)', memory: 'rgba(16, 185, 129, 0.05)', disk: 'rgba(234, 179, 8, 0.05)' };
+
+  const getData = () => {
+     if (type === 'memory') return history.map(h => h.memory ? parseFloat((h.memory.used / (1024 ** 3)).toFixed(2)) : 0);
+     if (type === 'disk') return history.map(h => h.disk ? parseFloat((h.disk.used / (1024 ** 3)).toFixed(2)) : 0);
+     return history.map(h => h.cpu.current);
+  };
+
+  const latestData = history[history.length - 1];
+  const maxScale = type === 'cpu' ? 100 
+     : type === 'memory' ? parseFloat(((latestData?.memory?.total || 0) / (1024 ** 3)).toFixed(1))
+     : parseFloat(((latestData?.disk?.total || 0) / (1024 ** 3)).toFixed(1));
+
   const data = {
     labels: history.map(h => new Date(h.timestamp || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })),
-    datasets: [{ label: 'CPU Usage', data: history.map(h => h.cpu.current), borderColor: '#0ea5e9', backgroundColor: 'rgba(14, 165, 233, 0.05)', borderWidth: 2, fill: true, tension: 0.2, pointRadius: Array(history.length).fill(0).fill(3, -1), pointBackgroundColor: '#0ea5e9', pointBorderColor: '#ffffff' }]
+    datasets: [{ 
+       label: labelMap[type], 
+       data: getData(), 
+       borderColor: colorMap[type], 
+       backgroundColor: fillMap[type], 
+       borderWidth: 2, 
+       fill: true, 
+       tension: 0.2, 
+       pointRadius: Array(history.length).fill(0).fill(3, -1), 
+       pointBackgroundColor: colorMap[type], 
+       pointBorderColor: '#ffffff' 
+    }]
   };
-  const opts = { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { min: 0, max: 100, ticks: { color: '#64748b' }, grid: { color: 'rgba(255,255,255,0.02)' } } } };
+  
+  const opts = { 
+    responsive: true, 
+    maintainAspectRatio: false, 
+    plugins: { legend: { display: false } }, 
+    scales: { 
+       x: { display: false }, 
+       y: { 
+          min: 0, 
+          max: maxScale || undefined,
+          ticks: { 
+             color: '#64748b',
+             callback: (value: any) => type === 'cpu' ? `${value}%` : `${value.toFixed(1)} GB`
+          }, 
+          grid: { color: 'rgba(255,255,255,0.02)' } 
+       } 
+    } 
+  };
   return <div style={{ height: 300 }}><Line data={data} options={opts as any} /></div>;
 }
