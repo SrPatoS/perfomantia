@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './AuthContext';
-import { Activity, LayoutDashboard, Settings, LogOut, Globe, ServerCog } from 'lucide-react';
+import { Activity, LayoutDashboard, Settings, LogOut, Globe, ServerCog, Container } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import './i18n';
 
@@ -9,6 +9,7 @@ import Login from './Login';
 import Dashboard from './Dashboard';
 import SettingsPage from './Settings';
 import ProcessesPage from './Processes';
+import DockerStatsPage from './DockerStats';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } }
@@ -39,6 +40,9 @@ function AppLayout() {
           <NavLink to="/processes" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <ServerCog size={18} /> {t('process_menu')}
           </NavLink>
+          <NavLink to="/docker" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <Container size={18} /> {t('docker_menu')}
+          </NavLink>
         </nav>
 
         {/* Bottom Profile Area */}
@@ -65,7 +69,7 @@ function AppLayout() {
       <main className="main-content">
         <header className="top-nav">
           <h1 className="page-title">
-             {location.pathname === '/' ? t('my_dashboard') : location.pathname === '/settings' ? t('settings') : location.pathname === '/processes' ? t('process_menu') : ''}
+             {location.pathname === '/' ? t('my_dashboard') : location.pathname === '/settings' ? t('settings') : location.pathname === '/processes' ? t('process_menu') : location.pathname === '/docker' ? t('docker_menu') : ''}
           </h1>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
@@ -79,6 +83,7 @@ function AppLayout() {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/processes" element={<ProcessesPage />} />
+            <Route path="/docker" element={<DockerStatsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </section>
