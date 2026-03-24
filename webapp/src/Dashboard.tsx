@@ -14,6 +14,7 @@ interface MetricsData {
   memory: { percent: number; used: number; total: number };
   disk: { used: number; total: number; percent: number };
   network: { rx: number; tx: number };
+  processes?: any[];
   timestamp?: string;
   uptime?: number;
 }
@@ -148,6 +149,28 @@ export default function Dashboard() {
                    <span>{t('node_alias')}:</span>
                    <span style={{ color: '#fff' }}>{activeData?.vpsId}</span>
                 </div>
+             </div>
+             
+             <div className="graph-card">
+                <h3 style={{ fontSize: '1rem', fontWeight: 500, color: '#fff', marginBottom: '1rem' }}>{t('top_processes')}</h3>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+                   <thead>
+                      <tr style={{ color: 'var(--text-muted)' }}>
+                         <th style={{ paddingBottom: '0.5rem', fontWeight: 500 }}>{t('process_name')}</th>
+                         <th style={{ paddingBottom: '0.5rem', fontWeight: 500 }}>{t('process_cpu')}</th>
+                         <th style={{ paddingBottom: '0.5rem', fontWeight: 500 }}>{t('process_ram')}</th>
+                      </tr>
+                   </thead>
+                   <tbody>
+                      {latest?.processes?.map((proc: any, idx: number) => (
+                         <tr key={idx} style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                            <td style={{ padding: '0.5rem 0', color: '#fff' }}>{proc.name}</td>
+                            <td style={{ padding: '0.5rem 0', color: 'var(--accent-color)' }}>{proc.cpu.toFixed(1)}%</td>
+                            <td style={{ padding: '0.5rem 0', color: 'var(--text-muted)' }}>{proc.mem.toFixed(1)}%</td>
+                         </tr>
+                      ))}
+                   </tbody>
+                </table>
              </div>
          </div>
       </div>
