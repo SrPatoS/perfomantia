@@ -16,9 +16,15 @@ export async function startSelfMonitoring(appInstance: any) {
 
   setInterval(async () => {
     try {
-      const [cpuLoad, mem, fs, netData, procs, dockerRaw, sizeMap, dockerVolumesRaw, statsMap] = await Promise.all([
+      let [cpuLoad, mem, fsRaw, netData, procs, dockerRaw, sizeMap, dockerVolumesRaw, statsMap] = await Promise.all([
         si.currentLoad(), si.mem(), si.fsSize(), si.networkStats(), si.processes(), si.dockerContainers(true).catch(() => []), getDockerSizes(), getDockerVolumes(), getDockerStats()
       ]);
+
+      // 🧹 Filtrar Partições Indesejadas (Camadas Docker e Overlays)
+      const fs = fsRaw.filter((f: any) => {
+         const exclude = ['overlay', 'docker', 'kubelet', 'containers', '/var/lib'];
+         return f.size > 0 && !exclude.some(ex => f.mount.includes(ex));
+      });
 
       const topProcesses = procs.list
          .sort((a: any, b: any) => b.cpu - a.cpu)
@@ -70,7 +76,14 @@ export async function startSelfMonitoring(appInstance: any) {
            cpuName: `${cpuInfo.manufacturer} ${cpuInfo.brand}`,
            cores: cpuInfo.physicalCores,
            totalMemGB,
-           disks: fs.filter(f => f.size > 0).map(f => ({ mount: f.mount, use: Math.round(f.use), sizeGB: (f.size / (1024 ** 3)).toFixed(1) }))
+            disks: fs
+               // Tratar /host como raiz visualmente e remover duplicatas de mesmos blocos
+               .map((f: any) => ({
+                  mount: f.mount === '/host' ? '/' : f.mount.replace('/host', '') || '/',
+                  use: Math.round(f.use),
+                  sizeGB: (f.size / (1024 ** 3)).toFixed(1)
+               }))
+               .filter((f: any, i: number, self: any[]) => self.findIndex(t => t.mount === f.mount) === i)
         },
         cpu: { current: Math.round(cpuLoad.currentLoad), cores: cpuLoad.cpus.map((c: any) => Math.round(c.load)) },
         memory: { total: mem.total, used: mem.used, percent: Math.round((mem.used / mem.total) * 100) },
