@@ -7,13 +7,13 @@ const ServerContext = createContext<any>(null);
 export function ServerProvider({ children }: { children: React.ReactNode }): any {
    const { token } = useAuth();
    const [servers, setServers] = useState<any[]>([]);
-   const [currentServer, setCurrentServer] = useState<any>({ id: 'local', name: 'Servidor Local', host_url: 'http://localhost:3000', api_key: '' });
+   const [currentServer, setCurrentServer] = useState<any>({ id: 'local', name: 'Servidor Local', host_url: window.location.origin, api_key: '' });
 
    useEffect(() => {
       if (!token) return;
-      axios.get('http://localhost:3000/api/settings/servers', { headers: { Authorization: `Bearer ${token}` } })
+      axios.get(`${window.location.origin}/api/settings/servers`, { headers: { Authorization: `Bearer ${token}` } })
            .then(res => {
-              const localNode = { id: 'local', name: 'Servidor Local', host_url: 'http://localhost:3000', api_key: token };
+              const localNode = { id: 'local', name: 'Servidor Local', host_url: window.location.origin, api_key: token };
               setServers([localNode, ...res.data]);
               setCurrentServer(localNode);
            }).catch(() => {});
@@ -22,8 +22,8 @@ export function ServerProvider({ children }: { children: React.ReactNode }): any
    const reloadServers = async () => {
       if (!token) return;
       try {
-         const res = await axios.get('http://localhost:3000/api/settings/servers', { headers: { Authorization: `Bearer ${token}` } });
-         setServers([{ id: 'local', name: 'Servidor Local', host_url: 'http://localhost:3000', api_key: token }, ...res.data]);
+         const res = await axios.get(`${window.location.origin}/api/settings/servers`, { headers: { Authorization: `Bearer ${token}` } });
+         setServers([{ id: 'local', name: 'Servidor Local', host_url: window.location.origin, api_key: token }, ...res.data]);
       } catch (e) {}
    };
 

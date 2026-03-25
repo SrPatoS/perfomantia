@@ -3,7 +3,7 @@ version: '3.8'
 services:
   # 🪐 MASTER (Seu Painel Principal + SQLite)
   perfomantia-master:
-    image: srvini/perfomantia:0.0.4
+    image: srvini/perfomantia:0.0.8
     container_name: perf_master
     restart: unless-stopped
     ports:
@@ -21,7 +21,7 @@ services:
 
   # 🛰️ AGENT (Simula uma VPS Remota na porta 3001)
   perfomantia-agent:
-    image: srvini/perfomantia:0.0.4
+    image: srvini/perfomantia:0.0.8
     container_name: perf_agent
     restart: unless-stopped
     ports:

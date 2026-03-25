@@ -10,12 +10,16 @@ import { join } from 'path';
 
 const app = new Elysia()
   .use(cors())
-  .use(staticPlugin({ assets: '/app/webapp/dist', prefix: '/' }))
   .use(jwt({ name: 'jwt', secret: process.env.JWT_SECRET || 'secret-shhh' }))
   
+  // 🛰️ Servir Arquivos Estáticos Manualmente para Evitar Bugs no Docker
+  .get('/assets/*', ({ params }) => Bun.file(`/app/webapp/dist/assets/${(params as any)['*']}`))
+  .get('/favicon.svg', () => Bun.file('/app/webapp/dist/favicon.svg'))
+  .get('/icons.svg', () => Bun.file('/app/webapp/dist/icons.svg'))
+
   .use(authRoutes)
   
-  // 🛰️ SPA Fallback para React (Garante que se não for asset estático no dist, devolve index.html)
+  // 🛰️ SPA Fallback para React (Garante que se não for asset ou api, devolve index.html)
   .get('*', ({ request }) => {
       const url = new URL(request.url);
       if (url.pathname.startsWith('/api') || url.pathname === '/ws') return;
