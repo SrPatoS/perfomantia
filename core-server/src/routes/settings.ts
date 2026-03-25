@@ -1,6 +1,6 @@
 import { Elysia } from 'elysia';
 import db from '../db';
-import { encrypt } from '../crypto';
+import { encrypt, decrypt } from '../crypto';
 
 export const settingsRoutes = new Elysia({ prefix: '/settings' })
   .get('/alerts', () => {
@@ -32,11 +32,13 @@ export const settingsRoutes = new Elysia({ prefix: '/settings' })
      return { success: true };
   })
   .get('/servers', () => {
-     return db.query('SELECT * FROM remote_servers').all();
+     const rows = db.query('SELECT * FROM remote_servers').all() as any[];
+     return rows.map(r => ({ ...r, api_key: r.api_key ? decrypt(r.api_key) : '' }));
   })
   .post('/servers', ({ body }) => {
      const b = body as any;
-     db.query('INSERT INTO remote_servers (name, host_url, api_key) VALUES (?, ?, ?)').run(b.name, b.host_url, b.api_key);
+     const encryptedKey = b.api_key ? encrypt(b.api_key) : '';
+     db.query('INSERT INTO remote_servers (name, host_url, api_key) VALUES (?, ?, ?)').run(b.name, b.host_url, encryptedKey);
      return { success: true };
   })
   .delete('/servers/:id', ({ params }) => {
