@@ -26,12 +26,22 @@ export default function Settings() {
   const [openSelect, setOpenSelect] = useState(false);
   const [mongoUri, setMongoUri] = useState('');
 
+  const [remoteServers, setRemoteServers] = useState<any[]>([]);
+  const [srvName, setSrvName] = useState('');
+  const [srvUrl, setSrvUrl] = useState('');
+  const [srvKey, setSrvKey] = useState('');
+
   const loadDatabases = () => {
      api.get('/settings/databases').then(r => setDatabases(r.data || [])).catch(console.error);
   };
 
+  const loadRemoteServers = () => {
+     api.get('/settings/servers').then(r => setRemoteServers(r.data || [])).catch(console.error);
+  };
+
   useEffect(() => {
      loadDatabases();
+     loadRemoteServers();
      api.get('/settings/alerts')
        .then(r => {
           const d = r.data;
@@ -75,6 +85,32 @@ export default function Settings() {
         showToast('Banco removido!');
         loadDatabases();
      } catch(e) {}
+  };
+
+  const handleAddServer = async () => {
+     if (!srvName || !srvUrl) return showToast('Preencha os campos!', 'error');
+     try {
+        await api.post('/settings/servers', { name: srvName, host_url: srvUrl, api_key: srvKey });
+        setSrvName(''); setSrvUrl(''); setSrvKey('');
+        showToast('Servidor adicionado!');
+        loadRemoteServers();
+     } catch(e) { showToast('Erro ao adicionar.', 'error'); }
+  };
+
+  const handleDeleteServer = async (id: number) => {
+     try {
+        await api.delete('/settings/servers/' + id);
+        showToast('Servidor removido!');
+        loadRemoteServers();
+     } catch(e) {}
+  };
+
+  const handleSaveServerAlert = async (id: number, patch: any) => {
+     try {
+        await api.patch('/settings/servers/' + id + '/alerts', patch);
+        showToast('Configuração salva!');
+        loadRemoteServers();
+     } catch(e) { showToast('Erro ao salvar.', 'error'); }
   };
 
   const handleSaveAlerts = async () => {
@@ -311,6 +347,75 @@ export default function Settings() {
            )}
         </div>
       </div>
+
+    <div style={cardStyle}>
+      <div style={headerStyle}>
+         <h3 style={{ fontSize: '1.25rem', fontWeight: 500, color: '#fff', margin: 0 }}>🛰️ Servidores Remotos</h3>
+         <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '0.3rem 0 0' }}>Adicione VPS remotas para monitorar no dropdown do topo.</p>
+      </div>
+      <div style={bodyStyle}>
+         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <input type="text" placeholder="Nome (Ex: VPS Nova York)" value={srvName} onChange={e => setSrvName(e.target.value)} style={{ ...inputStyle, width: '180px' }} />
+            <input type="text" placeholder="Host URL (Ex: http://ip:3000)" value={srvUrl} onChange={e => setSrvUrl(e.target.value)} style={{ ...inputStyle, flex: 1, minWidth: '200px' }} />
+            <input type="password" placeholder="AGENT_API_KEY" value={srvKey} onChange={e => setSrvKey(e.target.value)} style={{ ...inputStyle, width: '160px' }} />
+            <Button onClick={handleAddServer}>+ Adicionar</Button>
+         </div>
+
+         {remoteServers.length > 0 && remoteServers.map((s: any) => (
+            <div key={s.id} style={{ border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '1rem', marginTop: '1rem' }}>
+               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <div>
+                     <div style={{ color: '#fff', fontWeight: 500 }}>{s.name}</div>
+                     <div style={{ color: 'var(--accent-color)', fontSize: '0.78rem', marginTop: '0.2rem' }}>{s.host_url}</div>
+                  </div>
+                  <button onClick={() => handleDeleteServer(s.id)} style={{ padding: '0.3rem 0.75rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', border: 'none', borderRadius: '6px', fontSize: '0.78rem', cursor: 'pointer' }}>Excluir</button>
+               </div>
+
+               {/* Configuração de Alerta por Servidor */}
+               <div style={{ marginTop: '1rem', paddingTop: '1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.75rem' }}>
+                     <div style={{ position: 'relative', width: '32px', height: '18px', background: s.alert_enabled ? 'var(--accent-color)' : 'rgba(255,255,255,0.1)', borderRadius: '9px', cursor: 'pointer', transition: '0.2s', flexShrink: 0 }}
+                        onClick={() => handleSaveServerAlert(s.id, { alert_enabled: s.alert_enabled ? 0 : 1 })}>
+                        <div style={{ position: 'absolute', top: '2px', left: s.alert_enabled ? '16px' : '2px', width: '14px', height: '14px', background: '#fff', borderRadius: '50%', transition: '0.2s' }} />
+                     </div>
+                     <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>Alertas de Email para esta VPS</span>
+                  </div>
+
+                  {s.alert_enabled === 1 && (
+                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
+                        <div>
+                           <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>CPU %</label>
+                           <input type="number" min="1" max="100" defaultValue={s.cpu_threshold || 80}
+                              id={`cpu-${s.id}`} style={{ ...inputStyle, width: '70px' }} />
+                        </div>
+                        <div>
+                           <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>RAM %</label>
+                           <input type="number" min="1" max="100" defaultValue={s.mem_threshold || 85}
+                              id={`mem-${s.id}`} style={{ ...inputStyle, width: '70px' }} />
+                        </div>
+                        <div>
+                           <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Disco %</label>
+                           <input type="number" min="1" max="100" defaultValue={s.disk_threshold || 85}
+                              id={`disk-${s.id}`} style={{ ...inputStyle, width: '70px' }} />
+                        </div>
+                        <div>
+                           <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.3rem' }}>Cooldown (min)</label>
+                           <input type="number" min="1" defaultValue={s.cooldown_mins || 15}
+                              id={`cd-${s.id}`} style={{ ...inputStyle, width: '70px' }} />
+                        </div>
+                        <Button onClick={() => handleSaveServerAlert(s.id, {
+                           cpu_threshold: +(document.getElementById(`cpu-${s.id}`) as HTMLInputElement)?.value,
+                           mem_threshold: +(document.getElementById(`mem-${s.id}`) as HTMLInputElement)?.value,
+                           disk_threshold: +(document.getElementById(`disk-${s.id}`) as HTMLInputElement)?.value,
+                           cooldown_mins: +(document.getElementById(`cd-${s.id}`) as HTMLInputElement)?.value,
+                        })}>Salvar</Button>
+                     </div>
+                  )}
+               </div>
+            </div>
+         ))}
+      </div>
     </div>
+  </div>
   );
 }

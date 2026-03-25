@@ -5,7 +5,8 @@ import { staticPlugin } from '@elysiajs/static'
 import { authRoutes } from './routes/auth';
 import { settingsRoutes } from './routes/settings';
 import { serversRoutes } from './routes/servers';
-import { startSelfMonitoring } from './services/monitoring';
+import { startSelfMonitoring, checkRemoteAlerts } from './services/monitoring';
+import db from './db';
 import { join } from 'path';
 
 const isAgent = process.env.IS_AGENT === 'true';
@@ -41,7 +42,7 @@ if (!isAgent) {
 
 // 🛰️ ROTAS COMUNS (WebSocket de Telemetria carregado em ambos!)
 app.ws('/ws', {
-    async open(ws) {
+    async open(ws: any) {
       const type = (ws.data.query as any)?.type;
       const token = (ws.data.query as any)?.token; 
       if (type === 'dashboard') {
@@ -56,6 +57,23 @@ app.ws('/ws', {
           ws.close();
         }
       }
+    },
+    // 🛰️ Escuta mensagens de agentes remotos e avalia alertas
+    message(_ws: any, rawMsg: any) {
+      if (isAgent) return; // Agentes não processam alertas remotos
+      try {
+        const msg = typeof rawMsg === 'string' ? JSON.parse(rawMsg) : rawMsg;
+        if (msg?.event === 'metrics-live' && msg?.data) {
+          const { cpu, memory, disk } = msg.data;
+          const hostUrl = msg?.host_url;
+          if (!hostUrl) return;
+          // Encontra o servidor remoto pelo host_url
+          const srv = db.query('SELECT * FROM remote_servers WHERE host_url = ?').get(hostUrl) as any;
+          if (srv) {
+            checkRemoteAlerts(srv.id, cpu?.current || 0, memory?.percent || 0, disk?.percent || 0);
+          }
+        }
+      } catch(e) {}
     }
   })
   

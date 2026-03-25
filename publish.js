@@ -1,4 +1,6 @@
 const { execSync } = require('child_process');
+const fs = require('fs');
+const path = require('path');
 const version = process.argv[2];
 
 if (!version) {
@@ -7,6 +9,23 @@ if (!version) {
 }
 
 const IMAGE = 'srvini/perfomantia';
+
+// Atualiza a versão nos package.json do projeto
+const pkgPaths = [
+  path.join(__dirname, 'package.json'),
+  path.join(__dirname, 'core-server', 'package.json'),
+  path.join(__dirname, 'webapp', 'package.json'),
+];
+
+console.log(`\n📦 [0/3] Atualizando versão nos package.json para ${version}...`);
+for (const pkgPath of pkgPaths) {
+  if (fs.existsSync(pkgPath)) {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf-8'));
+    pkg.version = version;
+    fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
+    console.log(`   ✔ ${path.relative(__dirname, pkgPath)}`);
+  }
+}
 
 try {
   console.log(`\n🐳 [1/3] Construindo Imagem Versão ${version}...`);

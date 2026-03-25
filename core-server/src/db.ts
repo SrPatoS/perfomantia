@@ -68,6 +68,11 @@ db.query(`
   );
 `).run();
 
+// Migrate: adicionar colunas de alerta por servidor remoto
+['cpu_threshold INTEGER DEFAULT 80', 'mem_threshold INTEGER DEFAULT 85', 'disk_threshold INTEGER DEFAULT 85', 'cooldown_mins INTEGER DEFAULT 15', 'alert_enabled INTEGER DEFAULT 0'].forEach(col => {
+   try { db.query(`ALTER TABLE remote_servers ADD COLUMN ${col};`).run(); } catch(e) {}
+});
+
 // Seed default user if empty
 const count = db.query('SELECT COUNT(*) as count FROM users;').get() as { count: number };
 if (count.count === 0) {

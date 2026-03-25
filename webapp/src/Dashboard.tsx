@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from './api';
 import { useAuth } from './AuthContext';
@@ -36,37 +36,56 @@ export default function Dashboard() {
   const [selectedServer, setSelectedServer] = useState<string | null>(null);
   const [chartType, setChartType] = useState<'cpu' | 'memory' | 'disk'>('cpu');
 
+
   useEffect(() => {
+    // Só inicializa com os dados do histórico da API quando estamos no servidor local
+    if (currentServer.id !== 'local') return;
     if (initialServers && Array.isArray(initialServers)) {
        const init: Record<string, ServerState> = {};
        initialServers.forEach((s: any) => { init[s.id] = { vpsId: s.id, status: s.status, history: s.history || [] }; });
        setServers(prev => ({ ...init, ...prev }));
        if (initialServers.length > 0 && !selectedServer) { setSelectedServer(initialServers[0].id); }
     }
-  }, [initialServers]);
+  }, [initialServers, currentServer.id]);
+
+  // 🔑 Ref para não capturar selectedServer como stale closure
+  const needsAutoSelect = useRef(true);
 
   useEffect(() => {
     if (!token) return;
-    const hostUrl = currentServer.host_url || 'http://localhost:3000';
-    const wsUrl = hostUrl.replace(/^http/, 'ws') + '/ws?type=dashboard&token=' + (currentServer.api_key || token);
+    const hostUrl = (currentServer.host_url || window.location.origin).replace(/\/+$/, '');
+    const wsProto = hostUrl.startsWith('https') ? 'wss' : 'ws';
+    const wsUrl = hostUrl.replace(/^https?/, wsProto) + '/ws?type=dashboard&token=' + (currentServer.api_key || token);
+    
+    // 🔄 Limpa o histórico ao trocar de servidor
+    setServers({});
+    setSelectedServer(null);
+    needsAutoSelect.current = true; // sinaliza que o próximo vpsId recebido deve ser auto-selecionado
+
     const ws = new WebSocket(wsUrl);
     
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
-         if (msg.event === 'server-status') {
-           setServers(p => ({ ...p, [msg.data.vpsId]: { ...(p[msg.data.vpsId] || { vpsId: msg.data.vpsId, history: [] }), status: msg.data.status } }));
+        if (msg.event === 'server-status') {
+          setServers(p => ({ ...p, [msg.data.vpsId]: { ...(p[msg.data.vpsId] || { vpsId: msg.data.vpsId, history: [] }), status: msg.data.status } }));
         } else if (msg.event === 'metrics-live') {
-           setServers(p => {
-             const vpsId = msg.vpsId; const srv = p[vpsId]; if (!srv) return p;
-             const history = [...srv.history, msg.data].slice(-30);
-             return { ...p, [vpsId]: { ...srv, history } };
-           });
+          const vpsId = msg.vpsId;
+          // Usa ref para evitar stale closure — sempre lê o valor atual
+          if (needsAutoSelect.current) {
+            needsAutoSelect.current = false;
+            setSelectedServer(vpsId);
+          }
+          setServers(p => {
+            const srv = p[vpsId] || { vpsId, status: 'online' as const, history: [] };
+            const history = [...srv.history, msg.data].slice(-30);
+            return { ...p, [vpsId]: { ...srv, history } };
+          });
         }
       } catch (e) {}
     };
     return () => ws.close();
-  }, [token]);
+  }, [token, currentServer]);
 
   const activeData = selectedServer ? servers[selectedServer] : null;
   const latest = activeData?.history[activeData.history.length - 1];

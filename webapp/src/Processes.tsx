@@ -19,8 +19,10 @@ export default function Processes() {
 
   useEffect(() => {
     if (!token) return;
-    const hostUrl = currentServer.host_url || 'http://localhost:3000';
-    const wsUrl = hostUrl.replace(/^http/, 'ws') + '/ws?type=dashboard&token=' + (currentServer.api_key || token);
+    setProcesses([]);
+    const hostUrl = (currentServer.host_url || window.location.origin).replace(/\/+$/, '');
+    const wsProto = hostUrl.startsWith('https') ? 'wss' : 'ws';
+    const wsUrl = hostUrl.replace(/^https?/, wsProto) + '/ws?type=dashboard&token=' + (currentServer.api_key || token);
     const ws = new WebSocket(wsUrl);
     ws.onmessage = (event) => {
       try {
@@ -29,7 +31,7 @@ export default function Processes() {
       } catch (e) {}
     };
     return () => ws.close();
-  }, [token]);
+  }, [token, currentServer]);
 
   // Derived Metrics
   const highestCpu = useMemo(() => processes.length > 0 ? [...processes].sort((a,b)=>b.cpu - a.cpu)[0] : null, [processes]);

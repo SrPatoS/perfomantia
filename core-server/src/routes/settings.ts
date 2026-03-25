@@ -42,4 +42,17 @@ export const settingsRoutes = new Elysia({ prefix: '/settings' })
   .delete('/servers/:id', ({ params }) => {
      db.query('DELETE FROM remote_servers WHERE id = ?').run(params.id);
      return { success: true };
+  })
+  .patch('/servers/:id/alerts', ({ params, body }) => {
+     const b = body as any;
+     const fields: string[] = [];
+     const values: any[] = [];
+     const allowed = ['cpu_threshold','mem_threshold','disk_threshold','cooldown_mins','alert_enabled'];
+     for (const key of allowed) {
+        if (key in b) { fields.push(`${key} = ?`); values.push(b[key]); }
+     }
+     if (fields.length === 0) return { success: false };
+     values.push(params.id);
+     db.query(`UPDATE remote_servers SET ${fields.join(', ')} WHERE id = ?`).run(...values);
+     return { success: true };
   });

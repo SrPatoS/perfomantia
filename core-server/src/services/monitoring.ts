@@ -120,3 +120,39 @@ export async function startSelfMonitoring(appInstance: any) {
     } catch (error: any) { console.error('❌ Tracking Error:', error.message); }
   }, 2000);
 }
+
+// 🛰️ Cooldown por servidor remoto
+const remoteAlertCooldowns: Record<number, number> = {};
+
+/**
+ * Chamado pelo WebSocket quando chega uma métrica de um agente remoto.
+ * Verifica os thresholds configurados para aquele servidor e dispara email se necessário.
+ */
+export function checkRemoteAlerts(serverId: number, cpu: number, mem: number, disk: number) {
+   try {
+      const globalConfig = db.query('SELECT * FROM alert_settings WHERE id = 1').get() as any;
+      if (!globalConfig || !globalConfig.smtp_host) return; // Sem SMTP configurado, nada a fazer
+
+      const srvConfig = db.query('SELECT * FROM remote_servers WHERE id = ?').get(serverId) as any;
+      if (!srvConfig || srvConfig.alert_enabled !== 1) return;
+
+      const cpuThresh  = srvConfig.cpu_threshold  || 80;
+      const memThresh  = srvConfig.mem_threshold  || 85;
+      const diskThresh = srvConfig.disk_threshold || 85;
+      const cdMins     = srvConfig.cooldown_mins  || 15;
+
+      if (cpu >= cpuThresh || mem >= memThresh || disk >= diskThresh) {
+         const now = Date.now();
+         const last = remoteAlertCooldowns[serverId] || 0;
+         if (now - last > cdMins * 60 * 1000) {
+            remoteAlertCooldowns[serverId] = now;
+            // Usa as configs globais de SMTP mas o nome do servidor remoto
+            sendAlertEmail(
+               { ...globalConfig, smtp_pass: globalConfig.smtp_pass },
+               cpu, mem, disk
+            );
+            console.log(`🛰️ Remote alert fired for server [${srvConfig.name}] CPU:${cpu}% MEM:${mem}% DISK:${disk}%`);
+         }
+      }
+   } catch(e: any) { console.error('❌ checkRemoteAlerts error:', e.message); }
+}

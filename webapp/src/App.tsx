@@ -49,9 +49,11 @@ function AppLayout() {
           <NavLink to="/docker" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <Container size={18} /> {t('docker_menu')}
           </NavLink>
-          <NavLink to="/databases" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
-            <Database size={18} /> {t('databases_menu') || 'Bancos de Dados'}
-          </NavLink>
+          {currentServer.id === 'local' && (
+            <NavLink to="/databases" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+              <Database size={18} /> {t('databases_menu') || 'Bancos de Dados'}
+            </NavLink>
+          )}
           <NavLink to="/storage" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <HardDrive size={18} /> {t('storage_menu') || 'Armazenamento'}
           </NavLink>
