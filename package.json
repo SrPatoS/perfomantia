@@ -1,6 +1,6 @@
 {
   "name": "perfomantia",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "VPS Dashboard - Monorepo Runner",
   "scripts": {
     "dev:backend": "cd core-server && bun run --watch src/index.ts",
