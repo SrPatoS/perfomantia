@@ -1,0 +1,25 @@
+{
+  "name": "core-server",
+  "version": "1.0.50",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "bun run --watch src/index.ts"
+  },
+  "dependencies": {
+    "@elysiajs/cors": "^1.4.1",
+    "@elysiajs/jwt": "^1.4.1",
+    "@elysiajs/static": "^1.4.7",
+    "elysia": "latest",
+    "mongodb": "^7.1.1",
+    "nodemailer": "^8.0.3",
+    "pg": "^8.20.0",
+    "systeminformation": "^5.31.5"
+  },
+  "devDependencies": {
+    "@types/mongodb": "^4.0.7",
+    "@types/nodemailer": "^7.0.11",
+    "@types/pg": "^8.20.0",
+    "bun-types": "latest"
+  },
+  "module": "src/index.js"
+}
