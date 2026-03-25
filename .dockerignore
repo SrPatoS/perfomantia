@@ -1,0 +1,33 @@
+# 🐳 .dockerignore (Proteção de Dados Sensíveis)
+
+# --- 📦 Módulos & Compilações ---
+node_modules/
+dist/
+build/
+.next/
+
+# --- 🔐 Credenciais ---
+.env
+.env.*
+*.env
+
+# --- 🗄️ Bancos de Dados Locais ---
+*.db
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+core-server/perfomantia.sqlite
+
+# --- 🪵 Logs e Temporários ---
+logs/
+*.log
+tmp/
+temp/
+
+# --- 📂 Git & Configs ---
+.git/
+.gitignore
+docker-compose.yml
+Dockerfile
+Dockerfile.agent
+publish.js
