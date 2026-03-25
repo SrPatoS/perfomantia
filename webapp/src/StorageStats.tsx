@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
-import { HardDrive, Server, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { HardDrive, Server, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function StorageStats() {
+   const { t } = useTranslation();
    const { token } = useAuth();
    const [disks, setDisks] = useState<any[]>([]);
    const [volumes, setVolumes] = useState<any[]>([]);
@@ -26,7 +28,7 @@ export default function StorageStats() {
 
    const totalVolumeSize = volumes.reduce((acc, v) => {
       const sizeStr = v.size || '0B';
-      const match = sizeStr.match(/([0-9.]+)\\s*(GB|MB|KB|B)/i);
+      const match = sizeStr.match(/([0-9.]+)\s*(GB|MB|KB|B)/i);
       if (!match) return acc;
       const num = parseFloat(match[1]);
       const unit = match[2].toUpperCase();
@@ -38,11 +40,31 @@ export default function StorageStats() {
    }, 0);
 
    const formatBytes = (bytes: number) => {
+      if (bytes === 0) return '0 B';
+      if (!bytes) return '0 B';
       const k = 1024;
       const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
       const i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
    };
+
+   const [currentPage, setCurrentPage] = useState(1);
+   const itemsPerPage = 10;
+
+   const parseSizeToBytes = (sizeStr: string) => {
+      const match = (sizeStr || '').match(/([0-9.]+)\s*(GB|MB|KB|B)/i);
+      if (!match) return 0;
+      const num = parseFloat(match[1]);
+      const unit = match[2].toUpperCase();
+      if (unit === 'GB') return num * 1024 * 1024 * 1024;
+      if (unit === 'MB') return num * 1024 * 1024;
+      if (unit === 'KB') return num * 1024;
+      return num;
+   };
+
+   const sortedVolumes = [...volumes].sort((a, b) => parseSizeToBytes(b.size) - parseSizeToBytes(a.size));
+   const totalPages = Math.ceil(sortedVolumes.length / itemsPerPage);
+   const paginatedVolumes = sortedVolumes.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
    return (
      <div>
@@ -104,15 +126,38 @@ export default function StorageStats() {
                         </tr>
                      </thead>
                      <tbody>
-                        {volumes.map((v, i) => (
+                        {paginatedVolumes.map((v, i) => (
                            <tr key={i} style={{ borderBottom: '1px solid rgba(255,255,255,0.02)' }}>
-                              <td style={{ padding: '0.75rem', color: '#fff', fontFamily: 'monospace', fontSize: '0.85rem' }}>{v.name.substring(0, 35)}{v.name.length > 35 ? '...' : ''}</td>
+                              <td style={{ padding: '0.75rem', color: '#fff', fontFamily: 'monospace', fontSize: '0.85rem' }}>{v.name.substring(0, 45)}{v.name.length > 45 ? '...' : ''}</td>
                               <td style={{ padding: '0.75rem', color: 'var(--text-muted)' }}>{v.driver}</td>
                               <td style={{ padding: '0.75rem', textAlign: 'right', color: 'var(--accent-color)', fontWeight: 500 }}>{v.size}</td>
                            </tr>
                         ))}
                      </tbody>
                   </table>
+
+                  {/* Pagination Controls */}
+                  {totalPages > 1 && (
+                     <div style={{ padding: '1rem 1.5rem', background: 'rgba(255,255,255,0.01)', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{t('page')} {currentPage} {t('of')} {totalPages}</span>
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                           <button 
+                             disabled={currentPage === 1} 
+                             onClick={() => setCurrentPage(p => p - 1)}
+                             style={{ background: 'var(--pill-bg)', border: '1px solid var(--border-color)', color: currentPage === 1 ? 'var(--text-muted)' : '#fff', padding: '0.4rem 0.6rem', borderRadius: '6px', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                           >
+                             <ChevronLeft size={16} />
+                           </button>
+                           <button 
+                             disabled={currentPage === totalPages} 
+                             onClick={() => setCurrentPage(p => p + 1)}
+                             style={{ background: 'var(--pill-bg)', border: '1px solid var(--border-color)', color: currentPage === totalPages ? 'var(--text-muted)' : '#fff', padding: '0.4rem 0.6rem', borderRadius: '6px', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center' }}
+                           >
+                             <ChevronRight size={16} />
+                           </button>
+                        </div>
+                     </div>
+                  )}
                </div>
             </div>
          )}
