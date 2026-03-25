@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './AuthContext';
-import { Activity, LayoutDashboard, Settings, LogOut, Globe, ServerCog, Container, Database, HardDrive, ChevronDown } from 'lucide-react';
+import { LayoutDashboard, Settings, LogOut, Globe, ServerCog, Container, Database, HardDrive, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { ServerProvider, useServer } from './ServerContext';
 import './i18n';
@@ -35,7 +35,7 @@ function AppLayout() {
       {/* SIDEBAR PANEL */}
       <aside className="sidebar">
         <div className="brand-header">
-          <div className="logo-circle"><Activity size={18} /></div>
+          <img src="/icon.png" alt="Perfomantia" style={{ width: 32, height: 32, borderRadius: '8px', objectFit: 'cover' }} />
           <div>Perfomantia</div>
         </div>
         

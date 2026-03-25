@@ -1,8 +1,20 @@
 # Perfomantia
 
+<img src="assets/icon.png" width="64" align="left" style="margin-right: 16px" />
+
 Painel de Observabilidade Multi-Servidor em Tempo Real.
 
 Perfomantia é uma solução de monitoramento leve e plug-and-play para VPS e servidores Linux/Windows. Monitore CPU, RAM, disco, processos, containers Docker e bancos de dados, tudo em tempo real via WebSocket, sem agentes complexos.
+
+<br clear="left" />
+
+---
+
+## Screenshots
+
+![Dashboard](images/Screenshot_3.png)
+![Processos](images/Screenshot_4.png)
+![Containers](images/Screenshot_5.png)
 
 ---
 
