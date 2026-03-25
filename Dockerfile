@@ -16,6 +16,9 @@ RUN bun run build
 FROM oven/bun:latest
 WORKDIR /app
 
+# 🛠️ Instalar pacote ps (procps) para permitir leitura de processos da VPS
+RUN apt-get update && apt-get install -y procps && rm -rf /var/lib/apt/lists/*
+
 # Criar estrutura de pastas adjacentes para bater com o core-server
 RUN mkdir -p webapp core-server
 
