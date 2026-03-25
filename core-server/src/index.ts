@@ -6,13 +6,23 @@ import { authRoutes } from './routes/auth';
 import { settingsRoutes } from './routes/settings';
 import { serversRoutes } from './routes/servers';
 import { startSelfMonitoring } from './services/monitoring';
+import { join } from 'path';
 
 const app = new Elysia()
   .use(cors())
-  .use(staticPlugin({ assets: '../webapp/dist', prefix: '/' }))
+  .use(staticPlugin({ assets: '/app/webapp/dist', prefix: '/' }))
   .use(jwt({ name: 'jwt', secret: process.env.JWT_SECRET || 'secret-shhh' }))
   
   .use(authRoutes)
+  
+  // 🛰️ SPA Fallback para React (Garante que se não for asset estático no dist, devolve index.html)
+  .get('*', ({ request }) => {
+      const url = new URL(request.url);
+      if (url.pathname.startsWith('/api') || url.pathname === '/ws') return;
+      
+      const file = Bun.file('/app/webapp/dist/index.html');
+      return file;
+  })
   
   .ws('/ws', {
     async open(ws) {

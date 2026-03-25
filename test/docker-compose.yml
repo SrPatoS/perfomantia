@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  # 🪐 MASTER (Seu Painel Principal + SQLite)
+  perfomantia-master:
+    image: srvini/perfomantia:0.0.4
+    container_name: perf_master
+    restart: unless-stopped
+    ports:
+      - "8080:3000" # Acesso ao Front e Dashboard (Mudado para 8080 para não colidir)
+    volumes:
+      - ./master.sqlite:/app/core-server/perfomantia.sqlite
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/host:ro
+    environment:
+      - JWT_SECRET=master-secret-shh
+      - AGENT_API_KEY=nao-usada-no-master
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+      - HOST_ETC=/host/etc
+
+  # 🛰️ AGENT (Simula uma VPS Remota na porta 3001)
+  perfomantia-agent:
+    image: srvini/perfomantia:0.0.4
+    container_name: perf_agent
+    restart: unless-stopped
+    ports:
+      - "3001:3000" # Exposto na 3001 da sua máquina
+    volumes:
+      - ./agent.sqlite:/app/core-server/perfomantia.sqlite
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /:/host:ro
+    environment:
+      - AGENT_API_KEY=agent-secret-key-123
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+      - HOST_ETC=/host/etc

@@ -9,7 +9,8 @@
     "dev": "concurrently -k -p \"[{name}]\" -n \"Backend,WebUI\" -c \"magenta,cyan\" \"bun run dev:backend\" \"bun run dev:frontend\"",
     "build:ui": "cd webapp && bun run build",
     "build:bin": "cd core-server && bun build --compile src/index.ts --outfile perfomantia-server",
-    "start": "cd core-server && bun run src/index.ts"
+    "start": "cd core-server && bun run src/index.ts",
+    "release": "node publish.js"
   },
   "dependencies": {
     "concurrently": "^8.2.2"

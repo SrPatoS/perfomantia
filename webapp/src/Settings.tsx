@@ -24,6 +24,7 @@ export default function Settings() {
   const [dbType, setDbType] = useState('mongo');
   const [dbUri, setDbUri] = useState('');
   const [openSelect, setOpenSelect] = useState(false);
+  const [mongoUri, setMongoUri] = useState('');
 
   const loadDatabases = () => {
      api.get('/settings/databases').then(r => setDatabases(r.data || [])).catch(console.error);
@@ -45,7 +46,7 @@ export default function Settings() {
              setEmailTo(d.email_to || '');
              setEnabled(d.enabled === 1);
              setCooldown(String(d.cooldown_mins ?? 15));
-             
+             setMongoUri(d.mongo_uri || '');
           }
        })
        .catch(console.error);

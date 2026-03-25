@@ -10,7 +10,6 @@ export default function StorageStats() {
   const { currentServer } = useServer();
    const [disks, setDisks] = useState<any[]>([]);
    const [volumes, setVolumes] = useState<any[]>([]);
-   const [databases, setDatabases] = useState<any[]>([]);
 
    useEffect(() => {
      const hostUrl = currentServer.host_url || 'http://localhost:3000';
@@ -23,7 +22,6 @@ export default function StorageStats() {
          if (msg.event === 'metrics-live') {
             if (msg.data?.hardware?.disks) setDisks(msg.data.hardware.disks);
             if (msg.data?.dockerVolumes) setVolumes(msg.data.dockerVolumes);
-            if (msg.data?.databases) setDatabases(msg.data.databases);
          }
        } catch (e) {}
      };
