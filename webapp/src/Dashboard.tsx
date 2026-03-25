@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from './api';
 import { useAuth } from './AuthContext';
+import { useServer } from './ServerContext';
 import { Line } from 'react-chartjs-2';
 import { Cpu, MemoryStick, Activity, ArrowUpRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -23,6 +24,7 @@ interface ServerState { vpsId: string; status: 'online' | 'offline'; history: Me
 
 export default function Dashboard() {
   const { token } = useAuth();
+  const { currentServer } = useServer();
   const { t } = useTranslation();
   
   const { data: initialServers, isLoading } = useQuery({
@@ -45,7 +47,9 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!token) return;
-    const ws = new WebSocket(`ws://localhost:3000/ws?type=dashboard&token=${token}`);
+    const hostUrl = currentServer.host_url || 'http://localhost:3000';
+    const wsUrl = hostUrl.replace(/^http/, 'ws') + '/ws?type=dashboard&token=' + (currentServer.api_key || token);
+    const ws = new WebSocket(wsUrl);
     
     ws.onmessage = (event) => {
       try {

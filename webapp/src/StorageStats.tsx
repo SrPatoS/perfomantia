@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { useServer } from './ServerContext';
 import { useTranslation } from 'react-i18next';
 import { HardDrive, Server, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function StorageStats() {
    const { t } = useTranslation();
    const { token } = useAuth();
+  const { currentServer } = useServer();
    const [disks, setDisks] = useState<any[]>([]);
    const [volumes, setVolumes] = useState<any[]>([]);
    const [databases, setDatabases] = useState<any[]>([]);
 
    useEffect(() => {
-     const ws = new WebSocket(`ws://localhost:3000/ws?type=dashboard&token=${token}`);
+     const hostUrl = currentServer.host_url || 'http://localhost:3000';
+    const wsUrl = hostUrl.replace(/^http/, 'ws') + '/ws?type=dashboard&token=' + (currentServer.api_key || token);
+    const ws = new WebSocket(wsUrl);
      
      ws.onmessage = (event) => {
        try {

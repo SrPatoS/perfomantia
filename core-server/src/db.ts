@@ -58,6 +58,16 @@ db.query(`
   );
 `).run();
 
+db.query(`
+  CREATE TABLE IF NOT EXISTS remote_servers (
+     id INTEGER PRIMARY KEY AUTOINCREMENT,
+     name TEXT NOT NULL,
+     host_url TEXT NOT NULL,
+     api_key TEXT NOT NULL,
+     enabled INTEGER DEFAULT 1
+  );
+`).run();
+
 // Seed default user if empty
 const count = db.query('SELECT COUNT(*) as count FROM users;').get() as { count: number };
 if (count.count === 0) {

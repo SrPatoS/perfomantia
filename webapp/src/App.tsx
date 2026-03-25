@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './AuthContext';
-import { Activity, LayoutDashboard, Settings, LogOut, Globe, ServerCog, Container, Database, HardDrive } from 'lucide-react';
+import { Activity, LayoutDashboard, Settings, LogOut, Globe, ServerCog, Container, Database, HardDrive, ChevronDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { ServerProvider, useServer } from './ServerContext';
 import './i18n';
 
 import Login from './Login';
@@ -21,6 +23,8 @@ function AppLayout() {
   const { token, user, logout } = useAuth();
   const location = useLocation();
   const { t, i18n } = useTranslation();
+  const { servers, currentServer, setCurrentServer } = useServer();
+  const [isServerMenuOpen, setIsServerMenuOpen] = useState(false);
 
   const toggleLanguage = () => i18n.changeLanguage(i18n.language === 'en' ? 'pt' : 'en');
 
@@ -81,6 +85,36 @@ function AppLayout() {
           </h1>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+             {/* Server Selector */}
+             {servers.length > 0 && (
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--card-bg)', border: '1px solid var(--border-color)', padding: '0.35rem 0.75rem', borderRadius: '8px', backdropFilter: 'blur(10px)' }}>
+                   <ServerCog size={16} color="var(--accent-color)" />
+                   <button 
+                      onClick={() => setIsServerMenuOpen(!isServerMenuOpen)} 
+                      style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: '0.85rem', outline: 'none', cursor: 'pointer', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
+                   >
+                      <span>{currentServer?.name}</span>
+                      <ChevronDown size={14} style={{ transform: isServerMenuOpen ? 'rotate(180deg)' : 'rotate(0)', transition: 'transform 0.2s', color: 'var(--text-muted)' }} />
+                   </button>
+
+                   {isServerMenuOpen && (
+                      <div style={{ position: 'absolute', top: '125%', left: 0, minWidth: '160px', background: 'rgba(20, 24, 33, 0.95)', border: '1px solid var(--border-color)', borderRadius: '8px', zIndex: 100, boxShadow: '0 8px 30px rgba(0,0,0,0.5)', overflow: 'hidden', backdropFilter: 'blur(12px)' }}>
+                         {servers.map((s: any) => (
+                            <div 
+                               key={s.id} 
+                               onClick={() => { setCurrentServer(s); setIsServerMenuOpen(false); }}
+                               style={{ padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.85rem', color: s.id === currentServer?.id ? 'var(--accent-color)' : '#fff', background: s.id === currentServer?.id ? 'rgba(255,255,255,0.03)' : 'transparent', transition: 'all 0.2s' }}
+                               onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                               onMouseLeave={(e) => e.currentTarget.style.background = s.id === currentServer?.id ? 'rgba(255,255,255,0.03)' : 'transparent'}
+                            >
+                               {s.name}
+                            </div>
+                         ))}
+                      </div>
+                   )}
+                </div>
+             )}
+
              <button onClick={toggleLanguage} style={{ background: 'transparent', border: 'none', padding: 0, display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#fff', cursor: 'pointer' }}>
                 <Globe size={18} color="var(--text-muted)" /> <span style={{fontSize:'0.85rem', fontWeight: 600}}>{t('language')}</span>
              </button>
@@ -106,12 +140,14 @@ export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/*" element={<AppLayout />} />
-          </Routes>
-        </BrowserRouter>
+        <ServerProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/*" element={<AppLayout />} />
+            </Routes>
+          </BrowserRouter>
+        </ServerProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

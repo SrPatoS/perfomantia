@@ -30,4 +30,16 @@ export const settingsRoutes = new Elysia({ prefix: '/settings' })
         WHERE id = 1
      `).run(b.smtp_host, b.smtp_port, b.smtp_user, securePass, b.email_to, b.cpu_threshold, b.mem_threshold, b.disk_threshold || 85, b.enabled ? 1 : 0, b.cooldown_mins || 15, b.mongo_uri || null);
      return { success: true };
+  })
+  .get('/servers', () => {
+     return db.query('SELECT * FROM remote_servers').all();
+  })
+  .post('/servers', ({ body }) => {
+     const b = body as any;
+     db.query('INSERT INTO remote_servers (name, host_url, api_key) VALUES (?, ?, ?)').run(b.name, b.host_url, b.api_key);
+     return { success: true };
+  })
+  .delete('/servers/:id', ({ params }) => {
+     db.query('DELETE FROM remote_servers WHERE id = ?').run(params.id);
+     return { success: true };
   });

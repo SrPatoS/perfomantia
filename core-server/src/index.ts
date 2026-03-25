@@ -20,7 +20,15 @@ const app = new Elysia()
       const token = (ws.data.query as any)?.token; 
       if (type === 'dashboard') {
         if (!token) { ws.close(); return; }
-        ws.subscribe('dashboards');
+        
+        const isUser = await (ws.data as any).jwt.verify(token);
+        const agentKey = process.env.AGENT_API_KEY || 'secret-agent-key';
+        
+        if (isUser || token === agentKey) {
+          ws.subscribe('dashboards');
+        } else {
+          ws.close();
+        }
       }
     }
   })

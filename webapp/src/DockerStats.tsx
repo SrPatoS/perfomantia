@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from './AuthContext';
+import { useServer } from './ServerContext';
 import { Search, Container, Play, Square, ChevronRight, RefreshCw, Cpu, HardDrive, Activity } from 'lucide-react';
 
 export default function DockerStats() {
   const { t } = useTranslation();
   const { token } = useAuth();
+  const { currentServer } = useServer();
   const [containers, setContainers] = useState<any[]>([]);
   const [volumes, setVolumes] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -18,7 +20,9 @@ export default function DockerStats() {
 
   useEffect(() => {
     if (!token) return;
-    const ws = new WebSocket(`ws://localhost:3000/ws?type=dashboard&token=${token}`);
+    const hostUrl = currentServer.host_url || 'http://localhost:3000';
+    const wsUrl = hostUrl.replace(/^http/, 'ws') + '/ws?type=dashboard&token=' + (currentServer.api_key || token);
+    const ws = new WebSocket(wsUrl);
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);

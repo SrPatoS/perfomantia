@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { useServer } from './ServerContext';
 import { Line } from 'react-chartjs-2';
 import { Database, Activity, Share2, Cpu } from 'lucide-react';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler } from 'chart.js';
@@ -8,13 +9,16 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip,
 
 export default function DatabaseStats() {
    const { token } = useAuth();
+  const { currentServer } = useServer();
    const [databases, setDatabases] = useState<any[]>([]);
    const [selectedDb, setSelectedDb] = useState<number | null>(null);
    const [dbHistory, setDbHistory] = useState<{ [id: number]: any[] }>({});
 
    useEffect(() => {
      if (!token) return;
-     const ws = new WebSocket(`ws://localhost:3000/ws?type=dashboard&token=${token}`);
+     const hostUrl = currentServer.host_url || 'http://localhost:3000';
+    const wsUrl = hostUrl.replace(/^http/, 'ws') + '/ws?type=dashboard&token=' + (currentServer.api_key || token);
+    const ws = new WebSocket(wsUrl);
      
      ws.onmessage = (event) => {
        try {
