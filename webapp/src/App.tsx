@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider, useAuth } from './AuthContext';
-import { Activity, LayoutDashboard, Settings, LogOut, Globe, ServerCog, Container } from 'lucide-react';
+import { Activity, LayoutDashboard, Settings, LogOut, Globe, ServerCog, Container, Database } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import './i18n';
 
@@ -10,6 +10,7 @@ import Dashboard from './Dashboard';
 import SettingsPage from './Settings';
 import ProcessesPage from './Processes';
 import DockerStatsPage from './DockerStats';
+import DatabaseStatsPage from './DatabaseStats';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } }
@@ -43,6 +44,9 @@ function AppLayout() {
           <NavLink to="/docker" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
             <Container size={18} /> {t('docker_menu')}
           </NavLink>
+          <NavLink to="/databases" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+            <Database size={18} /> {t('databases_menu') || 'Bancos de Dados'}
+          </NavLink>
         </nav>
 
         {/* Bottom Profile Area */}
@@ -52,8 +56,8 @@ function AppLayout() {
                 {user?.username?.[0]?.toUpperCase()}
               </div>
               <div>
-                 <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 500 }}>{user?.username}</div>
-                 <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('administrator')}</div>
+                  <div style={{ fontSize: '0.9rem', color: '#fff', fontWeight: 500 }}>{user?.username}</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t('administrator')}</div>
               </div>
            </div>
            <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} style={{ marginBottom: '0.5rem', display: 'flex' }}>
@@ -62,14 +66,14 @@ function AppLayout() {
            <button onClick={logout} className="nav-link" style={{ background: 'transparent', border: 'none', width: '100%', padding: '0.5rem', cursor: 'pointer', textAlign: 'left' }}>
              <LogOut size={16} /> {t('logout')}
            </button>
-        </div>
+         </div>
       </aside>
       
       {/* MAIN CONTENT AREA */}
       <main className="main-content">
         <header className="top-nav">
           <h1 className="page-title">
-             {location.pathname === '/' ? t('my_dashboard') : location.pathname === '/settings' ? t('settings') : location.pathname === '/processes' ? t('process_menu') : location.pathname === '/docker' ? t('docker_menu') : ''}
+             {location.pathname === '/' ? t('my_dashboard') : location.pathname === '/settings' ? t('settings') : location.pathname === '/processes' ? t('process_menu') : location.pathname === '/docker' ? t('docker_menu') : location.pathname === '/databases' ? 'Bancos de Dados' : ''}
           </h1>
           
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
@@ -84,6 +88,7 @@ function AppLayout() {
             <Route path="/" element={<Dashboard />} />
             <Route path="/processes" element={<ProcessesPage />} />
             <Route path="/docker" element={<DockerStatsPage />} />
+            <Route path="/databases" element={<DatabaseStatsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
           </Routes>
         </section>
