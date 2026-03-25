@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  perfomantia:
+    build: .
+    container_name: perfomantia
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persistência do banco de dados (SQLite)
+      - ./perfomantia.sqlite:/app/core-server/perfomantia.sqlite
+      
+      # ⚠️ Requerido para ler volumes e containers Docker do Host
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      
+      # 🛰️ Requerido para monitorar o Servidor de Fora (Host)
+      - /:/host:ro
+
+    environment:
+      - JWT_SECRET=sua-chave-secreta-aqui
+      - AGENT_API_KEY=chave-de-api-para-vps-escrava
+      
+      # Avisa a biblioteca 'systeminformation' para ler os dados do Host
+      - HOST_PROC=/host/proc
+      - HOST_SYS=/host/sys
+      - HOST_ETC=/host/etc

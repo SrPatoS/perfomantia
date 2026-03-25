@@ -1,30 +1,38 @@
-FROM oven/bun:latest as builder
+# 🐳 Dockerfile Unificado (Front-end + Back-end)
 
-WORKDIR /app
-
-# Step 1: Build the Frontend
-COPY webapp/package.json webapp/bun.lockb* /app/webapp/
+# --- 🛠️ ESTÁGIO 1: Build do Front-End ---
+FROM oven/bun:latest AS builder
 WORKDIR /app/webapp
+
+# Instalar dependências do Vite
+COPY webapp/package.json ./
 RUN bun install
-COPY webapp/ /app/webapp/
+
+# Copiar arquivos e compilar o build estático
+COPY webapp/ ./
 RUN bun run build
 
-# Step 2: Set up the Backend
+# --- 🚀 ESTÁGIO 2: Servidor Back-End ---
+FROM oven/bun:latest
+WORKDIR /app
+
+# Criar estrutura de pastas adjacentes para bater com o core-server
+RUN mkdir -p webapp core-server
+
+# Copiar o build estático do primeiro estágio para webapp/dist
+COPY --from=builder /app/webapp/dist ./webapp/dist
+
 WORKDIR /app/core-server
-COPY core-server/package.json core-server/bun.lockb* ./
+
+# Instalar dependências do Elysia/Bun
+COPY core-server/package.json ./
 RUN bun install
+
+# Copiar código fonte do back-end
 COPY core-server/ ./
 
-# Using lightweight local execution
-# We will run the server natively with bun inside the container.
-# The server already expects static files in `../webapp/dist`
-
-ENV NODE_ENV=production
-ENV PORT=3000
-
-# Mount a volume for SQLite DB to persist between restarts
-RUN bun run src/db.ts # Seeks to seed the admin DB before run
-
+# Expor a porta 3000 (onde roda o Elysia)
 EXPOSE 3000
 
+# Comando para rodar o Core-Server
 CMD ["bun", "run", "src/index.ts"]
